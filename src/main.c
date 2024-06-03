@@ -5,7 +5,7 @@
 #include "const.h"
 #include "fftw3.h"
 #include "complex"
-
+//lo edit kar rahi
 int main(int argc, char **argv){
 
 	string filename;
