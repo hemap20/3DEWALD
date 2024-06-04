@@ -3,9 +3,9 @@
 #include "mathdec.h"
 #include "fundec.h"
 #include "const.h"
-#include "fftw3.h"
-#include "complex"
-//this is from remote explorer
+/*#include "fftw3.h"
+#include "complex" */
+//modif_1
 int main(int argc, char **argv){
 
 	string filename;
