@@ -19,7 +19,7 @@ SRC_DIR=./src
 OBJ_DIR=./obj
 
 # Library folders
-LIB_DIR=./lib
+LIB_DIR= /usr/lib
 
 # Object list
 OBJ_FILES=$(OBJ_DIR)/main.o \
@@ -62,4 +62,4 @@ $(RAT_OUTPUT):$(OBJ_FILES)
 
 # Clean objects and library
 clean:
-	$(RM) $(OBJ_FILES)
+	$(RM) $(OBJ_FILES) $(RAT_OUTPUT)
