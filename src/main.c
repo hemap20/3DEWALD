@@ -3,8 +3,8 @@
 #include "mathdec.h"
 #include "fundec.h"
 #include "const.h"
-/*#include "fftw3.h"
-#include "complex" */
+#include "fftw3.h"
+#include "complex" 
 //modif_1
 int main(int argc, char **argv){
 
