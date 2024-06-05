@@ -8,7 +8,7 @@ RAT_OUTPUT=$(RUN_DIR)/coulomb.x
 
 # Include folders
 
-INC_LIST= -I ./inc /usr/include/
+INC_LIST= -I ./inc 
 	#   -I/home/prateek/eigen3/
 
 # Source Folders
