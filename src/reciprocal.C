@@ -4,9 +4,9 @@
 // #include "omp.h"
 
 //Uncomment only one of them
-// #define NAIVE 1
-// #define REDUCTION_REAL_IMG 2
-// #define REDUCTION_KVECTOR 3
+//#define NAIVE 1
+//#define REDUCTION_REAL_IMG 2
+#define REDUCTION_KVECTOR 3
 #define SYNCHRONIZATION_CONSTRUCT 4
 
 
