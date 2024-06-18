@@ -5,10 +5,10 @@
 
 #define PAD 8
 //Uncomment only one of them
-// #define NAIVE 1
-// #define FALSE_SHARING_AND_PADDING 2
-#define REDUCTION 3
-// #define SYNCHRONIZATION_CONSTRUCT 4
+//#define NAIVE 1
+//#define FALSE_SHARING_AND_PADDING 2
+//#define REDUCTION 3
+#define SYNCHRONIZATION_CONSTRUCT 4
 
 
 #if defined FALSE_SHARING_AND_PADDING
