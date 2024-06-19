@@ -210,14 +210,20 @@ double total_e(double *rx, double *ry, double *rz, int N, double L,
 
 void init(double *rx, double *ry, double *rz, int n, double L, gsl_rng *r) {
     int i;
-    double s3 = pow(n * 1.0, 1.0 / 3.0), hL = L / 2.0;
-    int nx = (int)(s3), ny = (int)(s3), nz = (int)(s3);
-    double dx = L / (nx + 1), dy = L / (ny + 1), dz = L / (nz + 1);
-    int ntot = nx * ny * nz;
-    if (ntot < n) {
-        fprintf(stderr, "Density too low\n");
-        exit(1);
+    double s = pow(n * 1.0, 1.0 / 3.0); // Calculate the cube root of the number of particles
+    int nx = (int)(s), ny = (int)(s), nz = (int)(s); // Set initial grid dimensions
+    double dx = L / (nx + 1), dy = L / (ny + 1), dz = L / (nz + 1); // Calculate grid spacing
+    int ntot = nx * ny * nz; // Calculate total grid points
+
+    // Adjust grid dimensions if total grid points are less than number of particles
+    while (ntot < n) {
+        s += 1.0; // Increase grid dimension
+        nx = (int)(s), ny = (int)(s), nz = (int)(s); // Recalculate grid dimensions
+        dx = L / (nx + 1), dy = L / (ny + 1), dz = L / (nz + 1); // Recalculate grid spacing
+        ntot = nx * ny * nz; // Recalculate total grid points
     }
+
+    // Initialize particles within the adjusted grid dimensions
     for (i = 0; i < n; i++) {
         rx[i] = dx * (1 + i % nx) + gsl_rng_uniform(r);
         ry[i] = dy * (1 + (i / nx) % ny) + gsl_rng_uniform(r);
@@ -227,6 +233,7 @@ void init(double *rx, double *ry, double *rz, int n, double L, gsl_rng *r) {
         if (rz[i] > L) rz[i] -= L;
     }
 }
+
 
 void write_xyz(FILE *fp, double *rx, double *ry, double *rz, int n, double L) {
     int i;
