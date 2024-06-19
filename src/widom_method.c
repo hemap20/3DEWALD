@@ -48,7 +48,7 @@ double total_e(double *rx, double *ry, double *rz, int N, double L,
     }
     return e;
 }
-
+//writes the particle configuration to a file in XYZ format
 void write_xyz(FILE *fp, double *rx, double *ry, double *rz, int n, double L) {
     int i;
     fprintf(fp, "%i\n", n);
@@ -57,13 +57,15 @@ void write_xyz(FILE *fp, double *rx, double *ry, double *rz, int n, double L) {
         fprintf(fp, "%.5lf %.5lf %.5lf\n", rx[i], ry[i], rz[i]);
     }
 }
-
+//initializes the particle positions by placing them on a cubic grid and then scaling them to fit within the simulation box of size L.
 void init(double *rx, double *ry, double *rz, int n, double L, gsl_rng *r) {
     int i, ix, iy, iz;
     int n3 = 2;
+    //Finds the smallest cube of grid points that can fit all particles
     while ((n3 * n3 * n3) < n) n3++;
     ix = iy = iz = 0;
     for (i = 0; i < n; i++) {
+      //Arrays of the x, y, and z coordinates of particles
         rx[i] = ((double)ix + 0.5) * L / n3;
         ry[i] = ((double)iy + 0.5) * L / n3;
         rz[i] = ((double)iz + 0.5) * L / n3;
@@ -98,6 +100,7 @@ void widom(double *rx, double *ry, double *rz, int N, double L,
         if (dz > hL) dz -= L;
         else if (dz < -hL) dz += L;
         r2 = dx * dx + dy * dy + dz * dz;
+        //if the distance is within rc2, the Lennard-Jones potential is calculated and added to the total energy *e
         if (r2 < rc2) {
             r6i = 1.0 / (r2 * r2 * r2);
             *e += 4 * (r6i * r6i - r6i) - (shift ? ecut : 0.0);
@@ -106,7 +109,8 @@ void widom(double *rx, double *ry, double *rz, int N, double L,
 }
 
 enum { XYZ, NONE };
-
+// initializes variables, sets up the random number generator, reads input parameters
+// initializes particle positions, and performs Monte Carlo simulations
 int main(int argc, char *argv[]) {
     double *rx, *ry, *rz;
     int N = 216, c, a, p;
@@ -116,23 +120,23 @@ int main(int argc, char *argv[]) {
     double rho = 0.5, T = 1.0, rc2 = 3.5, vir, vir_old, p_sum, pcor, V;
     double E_new, E_old, esum, rr3, ecor, ecut;
     double ei_new, ei_old, ivir_new, ivir_old;
-    double dr = 0.2, dx, dy, dz;
+    double dr = 0.2, dx, dy, dz; //dr = max displacement for MC simulations
     double rxold, ryold, rzold;
     int i, j;
-    int nCycles = 10, nSamp, nEq = 1000;
-    int nAcc;
+    int nCycles = 10, nSamp, nEq = 1000; //nSamp = The total number of sampling steps, calculated as nCycles * N.
+    int nAcc; //number of accepted moves
     int short_out = 0;
-    int shift = 0;
-    int tailcorr = 1;
+    int shift = 0; //A flag for applying a shift in the potential energy calculation, not detailed in the provided segment.
+    int tailcorr = 1; //A flag indicating whether to apply the tail correction to the potential energy.
     int prog = 0;
     gsl_rng *r = gsl_rng_alloc(gsl_rng_mt19937);
     unsigned long int Seed = 23410981;
     FILE *fp;
     char *traj_fn = NULL;
     int traj_out = XYZ;
-    int traj_samp = 100;
+    int traj_samp = 100; //The frequency of trajectory sampling for output.
     double sum_e_minus_beta_W = 0.0;
-    int nInsertions = 0;
+    int nInsertions = 0; //The number of particle insertions in the Widom test for chemical potential calculation.
 
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-N")) N = atoi(argv[++i]);
@@ -167,41 +171,54 @@ int main(int argc, char *argv[]) {
     p_sum = 0.0;
     nAcc = 0;
     fp = (traj_fn && traj_out != NONE) ? fopen(traj_fn, "w") : NULL;
-
+    /* For the first nEq steps, the system equilibrates. After that, the system 
+    samples configurations and calculates the energy and pressure. The loop includes 
+    attempts to move a random particle and applies the Metropolis criterion to decide 
+    whether to accept the move. It also handles periodic boundary conditions.*/
     for (i = -nEq; i < nSamp; i++) {
+        // Select a random particle to move
         j = (int)(gsl_rng_uniform(r) * N);
         rxold = rx[j];
         ryold = ry[j];
         rzold = rz[j];
+        // Calculate the old energy of the selected particle
         E_old = energy_inter(j, rx, ry, rz, N, L, rc2, tailcorr, ecor, shift, ecut, &vir_old, 0);
+        // Attempt to move the particle
         rx[j] += (gsl_rng_uniform(r) - 0.5) * dr;
         ry[j] += (gsl_rng_uniform(r) - 0.5) * dr;
         rz[j] += (gsl_rng_uniform(r) - 0.5) * dr;
+        // Apply periodic boundary conditions
         if (rx[j] < -0.5 * L) rx[j] += L;
         else if (rx[j] > 0.5 * L) rx[j] -= L;
         if (ry[j] < -0.5 * L) ry[j] += L;
         else if (ry[j] > 0.5 * L) ry[j] -= L;
         if (rz[j] < -0.5 * L) rz[j] += L;
         else if (rz[j] > 0.5 * L) rz[j] -= L;
+        // Calculate the new energy of the selected particle
         E_new = energy_inter(j, rx, ry, rz, N, L, rc2, tailcorr, ecor, shift, ecut, &vir, 0);
+        // Metropolis criterion to decide whether to accept the move
         if (gsl_rng_uniform(r) < exp(beta * (E_old - E_new))) {
             nAcc++;
             vir_old = vir;
         } else {
+            // Revert the move if not accepted
             rx[j] = rxold;
             ry[j] = ryold;
             rz[j] = rzold;
         }
+        // Sampling phase
         if (i >= 0) {
             esum += E_new;
             p_sum += vir_old;
             if ((i % N) == 0) {
+                // Output progress and trajectory data
                 if (prog > 0 && ((i / N) % prog) == 0) {
                     printf("Cycle %i of %i\n", i / N - nEq, nCycles);
                 }
                 if (traj_fn && traj_out == XYZ && ((i / N) % traj_samp) == 0) {
                     write_xyz(fp, rx, ry, rz, N, L);
                 }
+                // Widom insertion method to calculate excess chemical potential
                 widom(rx, ry, rz, N, L, rc2, shift, ecut, r, &we);
                 sum_e_minus_beta_W += exp(-beta * we);
                 nInsertions++;
@@ -219,6 +236,7 @@ int main(int argc, char *argv[]) {
     printf("E/NkT = %.5lf\n", esum / (N * T));
     printf("P/rho kT = %.5lf\n", p_sum / rho);
     printf("Excess chemical potential (mu_ex) = %.5lf\n", mu_ex);
+    printf("NUmber of particle insertions = ", nInsertions);
 
     free(rx);
     free(ry);
