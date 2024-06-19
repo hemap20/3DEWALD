@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     int N = 216;
     double L = 0.0;
     double beta;
-    double rho_start = 0.3, rho_end = 0.8, rho_step = 0.1;
+    double rho_start = 1.5, rho_end = 3.0, rho_step = 0.1;
     double T = 1.0, rc2 = 3.5, vir, pcor, V;
     double E_new, E_old, esum, ecor, ecut;
     double ei_new, ei_old, ivir_new, ivir_old;
