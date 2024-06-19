@@ -15,7 +15,7 @@
 double compute_real_energy(double **atomPositions, float *atomCharges, int numAtoms, double beta, float **simulationBox) {
     int totalThreads;
     double partialSums[NUM_THREADS][PADDING_SIZE] = {0};
-    double totalEnergy = 0.0;
+    double real_energy = 0.0;
     omp_set_num_threads(thread::hardware_concurrency()); //Sets the number of OpenMP threads 
     #pragma omp parallel
     {
@@ -35,16 +35,16 @@ double compute_real_energy(double **atomPositions, float *atomCharges, int numAt
     }
 
     for (int k = 0; k < totalThreads; k++) {
-        totalEnergy += partialSums[k][0];
+        real_energy += partialSums[k][0];
     }
-    return totalEnergy;
+    return real_energy;
 }
 
 #elif defined USE_SYNCHRONIZATION_CONSTRUCT
 //* Synchronization construct with critical section
 double compute_real_energy(double **atomPositions, float *atomCharges, int numAtoms, double beta, float **simulationBox) {
     int totalThreads;
-    double totalEnergy = 0.0;
+    double real_energy = 0.0;
     omp_set_num_threads(thread::hardware_concurrency());
 
     #pragma omp parallel
@@ -64,43 +64,43 @@ double compute_real_energy(double **atomPositions, float *atomCharges, int numAt
         }
 
         #pragma omp critical
-        totalEnergy += localSum;
+        real_energy += localSum;
     }
-    return totalEnergy;
+    return real_energy;
 }
 
 #elif defined USE_NAIVE
 //* Single-threaded computation (naive approach)
 double compute_real_energy(double **atomPositions, float *atomCharges, int numAtoms, double beta, float **simulationBox) {
-    double totalEnergy = 0.0;
+    double real_energy = 0.0;
 
     for (int i = 0; i < numAtoms; i++) {
         for (int j = 0; j < i; j++) {
             if (i != j) {
                 double distance = dist(atomPositions, i, j, simulationBox);
-                totalEnergy += (atomCharges[i] * atomCharges[j] * erfc(beta * distance)) / distance;
+                real_energy += (atomCharges[i] * atomCharges[j] * erfc(beta * distance)) / distance;
             }
         }
     }
-    return totalEnergy;
+    return real_energy;
 }
 
 #elif defined USE_REDUCTION
 //* Parallel reduction construct
 double compute_real_energy(double **atomPositions, float *atomCharges, int numAtoms, double beta, float **simulationBox) {
-    double totalEnergy = 0.0;
+    double real_energy = 0.0;
     omp_set_num_threads(thread::hardware_concurrency());
 
-    #pragma omp parallel for simd schedule(runtime) reduction(+:totalEnergy)
+    #pragma omp parallel for simd schedule(runtime) reduction(+:real_energy)
     for (int i = 0; i < numAtoms; i++) {
         for (int j = 0; j < i; j++) {
             if (i != j) {
                 double distance = dist(atomPositions, i, j, simulationBox);
-                totalEnergy += (atomCharges[i] * atomCharges[j] * erfc(beta * distance)) / distance;
+                real_energy += (atomCharges[i] * atomCharges[j] * erfc(beta * distance)) / distance;
             }
         }
     }
-    return totalEnergy;
+    return real_energy;
 }
 
 

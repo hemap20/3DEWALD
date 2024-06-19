@@ -15,7 +15,7 @@
 //creating reciprocal space vectors
 #if defined BASIC
     double reci_energy(int K, float **box, float *ion_charge, int n_atoms, float **pos_ions, double beta){
-        double reci_energy = 0
+        double reci_energy_h= 0
         for(int kx=-K; kx<K+1; kx++){
             for (int ky=-K; ky<K+1; ky++){
                 for(int kz=-K; kz<K+1; kz++){
@@ -34,18 +34,18 @@
                     double norm_SG = norm(SG);
                     double mod_G = sqrt(G[0]*G[0] + G[1]*G[1] + G[2]*G[2]);
                     double damping_factor_exp = -(mod_G*mod_G)/(4*beta*beta);
-                    reci_energy += (exp(damping_factor_exp)*norm_SG)/(mod_G*mod_G);
+                    reci_energy_h+= (exp(damping_factor_exp)*norm_SG)/(mod_G*mod_G);
                 }
             }
         }
         //normalisation of energy
-        reci_energy = reci_energy*2*M_PI/(box[0][0]*box[1][1]*box[2][2]);
+        reci_energy_h= reci_energy*2*M_PI/(box[0][0]*box[1][1]*box[2][2]);
         return reci_energy;
     }
 #elif defined REDUCTION_REAL_IMG
 //separate loops for real and imaginary
     double reci_energy(int K, float **box, float *ion_charge, int n_atoms, float **pos_ions, double beta){
-        double reci_energy = 0;
+        double reci_energy_h= 0;
         complex<double> t(0,1);
         complex<double> SG = 0;
         //iterating through the reciprocal vectors
@@ -77,13 +77,13 @@
                     double norm_SG = norm(SG);
                     double mod_G = sqrt(G[0]*G[0] + G[1]*G[1] + G[2]*G[2]);
                     double damping_factor_exp = -(mod_G*mod_G)/(4*beta*beta);
-                    reci_energy += (exp(damping_factor_exp)*norm_SG)/(mod_G*mod_G);
+                    reci_energy_h+= (exp(damping_factor_exp)*norm_SG)/(mod_G*mod_G);
 
                 }
             }
         }
         //normalisation of energy
-        reci_energy = reci_energy*2*M_PI/(box[0][0]*box[1][1]*box[2][2]);
+        reci_energy_h= reci_energy*2*M_PI/(box[0][0]*box[1][1]*box[2][2]);
         return reci_energy;
     }
 #elif defined REDUCTION_KVECTOR

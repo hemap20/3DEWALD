@@ -275,7 +275,7 @@ int main(int argc, char **argv){
 	
 	chrono::time_point<std::chrono::system_clock> start1, end1;
 	start1 = chrono::system_clock::now();
-	double recienergy=reci_energy(PosIons, ion_charges, natoms, a, boxcell,6)*unitzer;
+	double recienergy=reci_energy_h(PosIons, ion_charges, natoms, a, boxcell,6)*unitzer;
 	cout<<fixed<<setprecision(5)<<"Reciprocal Energy: "<<recienergy<<" Kcal/mol"<<"\n";
 	end1 = chrono::system_clock::now();
 	chrono::duration<double> elapsed_seconds1 = end1- start1;
@@ -284,7 +284,7 @@ int main(int argc, char **argv){
 
 	chrono::time_point<std::chrono::system_clock> start2, end2;
 	start2 = chrono::system_clock::now();
-	double realenergy=real_energy(PosIons, ion_charges, natoms, a, boxcell)*unitzer;
+	double realenergy=compute_real_energy(PosIons, ion_charges, natoms, a, boxcell)*unitzer;
 	cout<<fixed<<setprecision(5)<<"Real Energy: "<<realenergy<<" Kcal/mol"<<"\n";
 	end2 = chrono::system_clock::now();
 	chrono::duration<double> elapsed_seconds2 = end2 - start2;

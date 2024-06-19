@@ -1,5 +1,5 @@
-//gcc -o widom_method_loop widom_method_loop.c -lgsl -lgslcblas -lm
-//./widom_method_loop -N 216 -rho_start 0.3 -rho_end 0.8 -rho_step 0.1 -T 1.0 -dr 0.2 -rc 3.5 -nc 10000 -ne 1000
+//gcc -o widom_method_loop_rho widom_method_loop_rho.c -lgsl -lgslcblas -lm
+//./widom_method_loop_rho -N 216 -rho_start 0.3 -rho_end 0.8 -rho_step 0.1 -T 1.0 -dr 0.2 -rc 3.5 -nc 10000 -ne 1000
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
