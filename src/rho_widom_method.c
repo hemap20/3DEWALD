@@ -1,5 +1,5 @@
-//gcc -o widom_method_loop_rho widom_method_loop_rho.c -lgsl -lgslcblas -lm
-//./widom_method_loop_rho
+//gcc -o rho_widom_method rho_widom_method.c -lgsl -lgslcblas -lm
+//./rho_widom_method
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,9 +45,9 @@ int main(int argc, char *argv[]) {
     int traj_samp = 100;
 
     // Open CSV file for writing results
-    fp = fopen("output.csv", "w");
+    fp = fopen("rho_output.csv", "w");
     if (fp == NULL) {
-        fprintf(stderr, "Error opening output.csv for writing.\n");
+        fprintf(stderr, "Error opening rho_output.csv for writing.\n");
         return 1;
     }
 
