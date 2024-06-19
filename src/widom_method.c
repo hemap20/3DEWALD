@@ -236,7 +236,7 @@ int main(int argc, char *argv[]) {
     printf("E/NkT = %.5lf\n", esum / (N * T));
     printf("P/rho kT = %.5lf\n", p_sum / rho);
     printf("Excess chemical potential (mu_ex) = %.5lf\n", mu_ex);
-    printf("NUmber of particle insertions = ", nInsertions);
+    printf("Number of particle insertions = %.5d\n", nInsertions);
 
     free(rx);
     free(ry);
