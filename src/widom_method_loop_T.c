@@ -1,5 +1,5 @@
 //gcc -o widom_method_loop_T widom_method_loop_T.c -lgsl -lgslcblas -lm
-//./widom_method_loop_T -N 216 -rho 0.5 -T_start 100.0 -T_end 700 -T_step 50 -dr 0.2 -rc 3.5 -nc 10000 -ne 1000
+//./widom_method_loop_T 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
     double L = 0.0;
     double we, w_sum;
     double beta;
-    double rho = 0.5, T_start = 1.0, T_end = 1.5, T_step = 0.1, T, rc2 = 3.5, vir, vir_old, p_sum, pcor, V;
+    double rho = 0.5, T_start = 100.0, T_end = 700, T_step = 50, T, rc2 = 3.5, vir, vir_old, p_sum, pcor, V;
     double E_new, E_old, esum, rr3, ecor, ecut;
     double ei_new, ei_old, ivir_new, ivir_old;
     double dr = 0.2, dx, dy, dz;
