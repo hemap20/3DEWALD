@@ -1,11 +1,11 @@
-//gcc -o widom_method widom_method.c -lgsl -lgslcblas -lm
-//./widom_method -N 216 -rho 0.5 -T 1.0 -dr 0.2 -rc 3.5 -nc 10 -ne 1000 +tc -sh -prog 100 -s 23410981 -traj_samp 100 -traj output.xyz
+//gcc -o widom_method_loop widom_method_loop.c -lgsl -lgslcblas -lm
+//./widom_method_loop -N 216 -rho_start 0.3 -rho_end 0.8 -rho_step 0.1 -T 1.0 -dr 0.2 -rc 3.5 -nc 10000 -ne 1000
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <gsl/gsl_rng.h>
-//sum of all pair interactions between a particle i and all particles from i0 to N-1.
+
 double energy_inter(int i, double *rx, double *ry, double *rz, int N, double L,
                     double rc2, int tailcorr, double ecor,
                     int shift, double ecut, double *vir, int i0) {
@@ -48,7 +48,7 @@ double total_e(double *rx, double *ry, double *rz, int N, double L,
     }
     return e;
 }
-//writes the particle configuration to a file in XYZ format
+
 void write_xyz(FILE *fp, double *rx, double *ry, double *rz, int n, double L) {
     int i;
     fprintf(fp, "%i\n", n);
@@ -57,15 +57,13 @@ void write_xyz(FILE *fp, double *rx, double *ry, double *rz, int n, double L) {
         fprintf(fp, "%.5lf %.5lf %.5lf\n", rx[i], ry[i], rz[i]);
     }
 }
-//initializes the particle positions by placing them on a cubic grid and then scaling them to fit within the simulation box of size L.
+
 void init(double *rx, double *ry, double *rz, int n, double L, gsl_rng *r) {
     int i, ix, iy, iz;
     int n3 = 2;
-    //Finds the smallest cube of grid points that can fit all particles
     while ((n3 * n3 * n3) < n) n3++;
     ix = iy = iz = 0;
     for (i = 0; i < n; i++) {
-      //Arrays of the x, y, and z coordinates of particles
         rx[i] = ((double)ix + 0.5) * L / n3;
         ry[i] = ((double)iy + 0.5) * L / n3;
         rz[i] = ((double)iz + 0.5) * L / n3;
@@ -100,7 +98,6 @@ void widom(double *rx, double *ry, double *rz, int N, double L,
         if (dz > hL) dz -= L;
         else if (dz < -hL) dz += L;
         r2 = dx * dx + dy * dy + dz * dz;
-        //if the distance is within rc2, the Lennard-Jones potential is calculated and added to the total energy *e
         if (r2 < rc2) {
             r6i = 1.0 / (r2 * r2 * r2);
             *e += 4 * (r6i * r6i - r6i) - (shift ? ecut : 0.0);
@@ -109,38 +106,40 @@ void widom(double *rx, double *ry, double *rz, int N, double L,
 }
 
 enum { XYZ, NONE };
-// initializes variables, sets up the random number generator, reads input parameters
-// initializes particle positions, and performs Monte Carlo simulations
+
 int main(int argc, char *argv[]) {
     double *rx, *ry, *rz;
     int N = 216, c, a, p;
     double L = 0.0;
     double we, w_sum;
     double beta;
-    double rho = 0.5, T = 1.0, rc2 = 3.5, vir, vir_old, p_sum, pcor, V;
+    double rho_start = 0.3, rho_end = 0.8, rho_step = 0.1; // Define the range and step for rho
+    double T = 1.0, rc2 = 3.5, vir, vir_old, p_sum, pcor, V;
     double E_new, E_old, esum, rr3, ecor, ecut;
     double ei_new, ei_old, ivir_new, ivir_old;
-    double dr = 0.2, dx, dy, dz; //dr = max displacement for MC simulations
+    double dr = 0.2, dx, dy, dz;
     double rxold, ryold, rzold;
     int i, j;
-    int nCycles = 10, nSamp, nEq = 1000; //nSamp = The total number of sampling steps, calculated as nCycles * N.
-    int nAcc; //number of accepted moves
+    int nCycles = 10, nSamp, nEq = 1000;
+    int nAcc;
     int short_out = 0;
-    int shift = 0; //A flag for applying a shift in the potential energy calculation, not detailed in the provided segment.
-    int tailcorr = 1; //A flag indicating whether to apply the tail correction to the potential energy.
+    int shift = 0;
+    int tailcorr = 1;
     int prog = 0;
     gsl_rng *r = gsl_rng_alloc(gsl_rng_mt19937);
     unsigned long int Seed = 23410981;
     FILE *fp;
     char *traj_fn = NULL;
     int traj_out = XYZ;
-    int traj_samp = 100; //The frequency of trajectory sampling for output.
+    int traj_samp = 100;
     double sum_e_minus_beta_W = 0.0;
-    int nInsertions = 0; //The number of particle insertions in the Widom test for chemical potential calculation.
+    int nInsertions = 0;
 
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-N")) N = atoi(argv[++i]);
-        else if (!strcmp(argv[i], "-rho")) rho = atof(argv[++i]);
+        else if (!strcmp(argv[i], "-rho_start")) rho_start = atof(argv[++i]);
+        else if (!strcmp(argv[i], "-rho_end")) rho_end = atof(argv[++i]);
+        else if (!strcmp(argv[i], "-rho_step")) rho_step = atof(argv[++i]);
         else if (!strcmp(argv[i], "-T")) T = atof(argv[++i]);
         else if (!strcmp(argv[i], "-dr")) dr = atof(argv[++i]);
         else if (!strcmp(argv[i], "-rc")) rc2 = atof(argv[++i]);
@@ -154,89 +153,111 @@ int main(int argc, char *argv[]) {
         }
         else if (!strcmp(argv[i], "-prog")) prog = atoi(argv[++i]);
     }
+
     rc2 *= rc2;
     gsl_rng_set(r, Seed);
-    L = pow(((double)N / rho), 1.0 / 3.0);
-    V = L * L * L;
     beta = 1.0 / T;
-    ecor = (tailcorr ? (8.0 * M_PI * rho / 3.0) * (1.0 / 3.0 * pow(rc2, -3.0) - pow(rc2, -1.5)) : 0.0);
-    ecut = (4.0 * (pow(rc2, -6.0) - pow(rc2, -3.0)));
-    nSamp = nCycles * N;
 
     rx = (double *)malloc(N * sizeof(double));
     ry = (double *)malloc(N * sizeof(double));
     rz = (double *)malloc(N * sizeof(double));
-    init(rx, ry, rz, N, L, r);
-    esum = 0.0;
-    p_sum = 0.0;
-    nAcc = 0;
-    fp = (traj_fn && traj_out != NONE) ? fopen(traj_fn, "w") : NULL;
-    /* For the first nEq steps, the system equilibrates. After that, the system 
-    samples configurations and calculates the energy and pressure. The loop includes 
-    attempts to move a random particle and applies the Metropolis criterion to decide 
-    whether to accept the move. It also handles periodic boundary conditions.*/
-    for (i = -nEq; i < nSamp; i++) {
-        // Select a random particle to move
-        j = (int)(gsl_rng_uniform(r) * N);
-        rxold = rx[j];
-        ryold = ry[j];
-        rzold = rz[j];
-        // Calculate the old energy of the selected particle
-        E_old = energy_inter(j, rx, ry, rz, N, L, rc2, tailcorr, ecor, shift, ecut, &vir_old, 0);
-        // Attempt to move the particle
-        rx[j] += (gsl_rng_uniform(r) - 0.5) * dr;
-        ry[j] += (gsl_rng_uniform(r) - 0.5) * dr;
-        rz[j] += (gsl_rng_uniform(r) - 0.5) * dr;
-        // Apply periodic boundary conditions
-        if (rx[j] < -0.5 * L) rx[j] += L;
-        else if (rx[j] > 0.5 * L) rx[j] -= L;
-        if (ry[j] < -0.5 * L) ry[j] += L;
-        else if (ry[j] > 0.5 * L) ry[j] -= L;
-        if (rz[j] < -0.5 * L) rz[j] += L;
-        else if (rz[j] > 0.5 * L) rz[j] -= L;
-        // Calculate the new energy of the selected particle
-        E_new = energy_inter(j, rx, ry, rz, N, L, rc2, tailcorr, ecor, shift, ecut, &vir, 0);
-        // Metropolis criterion to decide whether to accept the move
-        if (gsl_rng_uniform(r) < exp(beta * (E_old - E_new))) {
-            nAcc++;
-            vir_old = vir;
-        } else {
-            // Revert the move if not accepted
-            rx[j] = rxold;
-            ry[j] = ryold;
-            rz[j] = rzold;
+
+    for (double rho = rho_start; rho <= rho_end; rho += rho_step) {
+        L = pow(((double)N / rho), 1.0 / 3.0);
+        V = L * L * L;
+        ecor = (tailcorr ? (8.0 * M_PI * rho / 3.0) * (1.0 / 3.0 * pow(rc2, -3.0) - pow(rc2, -1.5)) : 0.0);
+        ecut = (4.0 * (pow(rc2, -6.0) - pow(rc2, -3.0)));
+        pcor = (tailcorr ? (32.0 * M_PI * rho * rho / 9.0) * (pow(rc2, -3.0) - 1.5 * pow(rc2, -1.5)) : 0.0);
+        
+        init(rx, ry, rz, N, L, r);
+        esum = 0.0;
+        w_sum = 0.0;
+        p_sum = 0.0;
+        nAcc = 0;
+        nSamp = 0;
+        fp = NULL;
+        if (traj_fn != NULL) fp = fopen(traj_fn, "w");
+
+        E_old = total_e(rx, ry, rz, N, L, rc2, tailcorr, ecor, shift, ecut, &vir);
+        for (i = 0; i < nEq; i++) {
+            for (j = 0; j < N; j++) {
+                rxold = rx[j];
+                ryold = ry[j];
+                rzold = rz[j];
+                ei_old = energy_inter(j, rx, ry, rz, N, L, rc2, tailcorr, ecor, shift, ecut, &ivir_old, 0);
+                rx[j] += (gsl_rng_uniform(r) - 0.5) * dr;
+                ry[j] += (gsl_rng_uniform(r) - 0.5) * dr;
+                rz[j] += (gsl_rng_uniform(r) - 0.5) * dr;
+                if (rx[j] > L) rx[j] -= L;
+                if (rx[j] < 0) rx[j] += L;
+                if (ry[j] > L) ry[j] -= L;
+                if (ry[j] < 0) ry[j] += L;
+                if (rz[j] > L) rz[j] -= L;
+                if (rz[j] < 0) rz[j] += L;
+                ei_new = energy_inter(j, rx, ry, rz, N, L, rc2, tailcorr, ecor, shift, ecut, &ivir_new, 0);
+                if (gsl_rng_uniform(r) < exp(-beta * (ei_new - ei_old))) {
+                    E_old += (ei_new - ei_old);
+                    vir += (ivir_new - ivir_old);
+                    nAcc++;
+                } else {
+                    rx[j] = rxold;
+                    ry[j] = ryold;
+                    rz[j] = rzold;
+                }
+            }
+            if (prog) printf("Equilibration step %d/%d\r", i + 1, nEq);
         }
-        // Sampling phase
-        if (i >= 0) {
+
+        for (i = 0; i < nCycles; i++) {
+            for (j = 0; j < N; j++) {
+                rxold = rx[j];
+                ryold = ry[j];
+                rzold = rz[j];
+                ei_old = energy_inter(j, rx, ry, rz, N, L, rc2, tailcorr, ecor, shift, ecut, &ivir_old, 0);
+                rx[j] += (gsl_rng_uniform(r) - 0.5) * dr;
+                ry[j] += (gsl_rng_uniform(r) - 0.5) * dr;
+                rz[j] += (gsl_rng_uniform(r) - 0.5) * dr;
+                if (rx[j] > L) rx[j] -= L;
+                if (rx[j] < 0) rx[j] += L;
+                if (ry[j] > L) ry[j] -= L;
+                if (ry[j] < 0) ry[j] += L;
+                if (rz[j] > L) rz[j] -= L;
+                if (rz[j] < 0) rz[j] += L;
+                ei_new = energy_inter(j, rx, ry, rz, N, L, rc2, tailcorr, ecor, shift, ecut, &ivir_new, 0);
+                if (gsl_rng_uniform(r) < exp(-beta * (ei_new - ei_old))) {
+                    E_old += (ei_new - ei_old);
+                    vir += (ivir_new - ivir_old);
+                    nAcc++;
+                } else {
+                    rx[j] = rxold;
+                    ry[j] = ryold;
+                    rz[j] = rzold;
+                }
+            }
+            E_new = E_old;
             esum += E_new;
-            p_sum += vir_old;
-            if ((i % N) == 0) {
-                // Output progress and trajectory data
-                if (prog > 0 && ((i / N) % prog) == 0) {
-                    printf("Cycle %i of %i\n", i / N - nEq, nCycles);
-                }
-                if (traj_fn && traj_out == XYZ && ((i / N) % traj_samp) == 0) {
-                    write_xyz(fp, rx, ry, rz, N, L);
-                }
-                // Widom insertion method to calculate excess chemical potential
+            p_sum += rho * T + (vir / (3.0 * V)) + pcor;
+
+            for (p = 0; p < traj_samp; p++) {
                 widom(rx, ry, rz, N, L, rc2, shift, ecut, r, &we);
                 sum_e_minus_beta_W += exp(-beta * we);
                 nInsertions++;
             }
+            if (fp && (i % traj_samp) == 0) {
+                write_xyz(fp, rx, ry, rz, N, L);
+            }
+            nSamp++;
+            if (prog) printf("Cycle %d/%d\r", i + 1, nCycles);
         }
+
+        if (fp) fclose(fp);
+
+        double avgE = esum / (double)nSamp;
+        double avgP = p_sum / (double)nSamp;
+        double mu_excess = -log(sum_e_minus_beta_W / (double)nInsertions) / beta;
+
+        printf("rho = %.2f, Average Energy per Particle = %.5lf, Average Pressure = %.5lf, Excess Chemical Potential = %.5lf\n", rho, avgE / N, avgP, mu_excess);
     }
-    esum /= nSamp;
-    p_sum = rho * T + p_sum / (3.0 * V * nSamp);
-    if (traj_fn) fclose(fp);
-
-    // Calculate the excess chemical potential
-    double average_e_minus_beta_W = sum_e_minus_beta_W / nInsertions;
-    double mu_ex = -T * log(average_e_minus_beta_W / rho);
-
-    printf("E/NkT = %.5lf\n", esum / (N * T));
-    printf("P/rho kT = %.5lf\n", p_sum / rho);
-    printf("Excess chemical potential (mu_ex) = %.5lf\n", mu_ex);
-    printf("NUmber of particle insertions = ", nInsertions);
 
     free(rx);
     free(ry);
