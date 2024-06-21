@@ -59,11 +59,11 @@ void CalDens(double **PosIons, int natoms, float **boxcell, int n_atomtype, int 
 
 double selfe(int n_atomtype, int *natoms_type, float *chargs, float betaa);
 
-double compute_real_energy(double **atomPositions, float *atomCharges, int numAtoms, double beta, float **simulationBox)
+double compute_real_energy(double **atomPositions, float *atomCharges, int numAtoms, double beta, float **simulationBox);
 
 double dist(double **PosIons, int atom1, int atom2, float **box);
 
-double reci_energy_h(int K, float **box, float *ion_charge, int n_atoms, float **pos_ions, double beta)
+double reci_energy_h(float **pos_ions,float *ion_charge, int n_atoms, int K, float **box, double beta);
 
 // void scalarProductMat(double mat[3][3], double k);
 

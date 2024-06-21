@@ -242,5 +242,10 @@ int main(int argc, char *argv[]) {
     free(ry);
     free(rz);
     gsl_rng_free(r);
+    int total_moves = nSamp + nEq; // Total number of attempted moves including equilibration steps
+    print("Total number of steps: ", total_moves)
+    double acceptance_ratio = (double)nAcc / total_moves;
+    print("Acceptance ratio: ", acceptance_ratio)
+
     return 0;
 }
