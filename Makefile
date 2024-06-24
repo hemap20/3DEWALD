@@ -12,11 +12,12 @@ INC_LIST= -I ./inc
 	#   -I/home/prateek/eigen3/
 
 # Source Folders
-SRC_DIR=./src
+SRC_DIR= ./src/main.c src/hema_real_energy.C src/hema_reciprocal_energy.C src/dSFMT.c src/print.c src/self_e.C src/dist.C src/bspline_reci.C src/error.c
 
 #For if ./obj is not present: Types of Prerequisites (https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html) 
 # Object folders
-OBJ_DIR=./obj
+OBJ_DIR=$(SRC:src/%.C=obj/%.o)
+OBJ_DIR+= $(SRC:src/%.c=obj/%.o)
 
 # Library folders
 LIB_DIR= /usr/lib
