@@ -63,7 +63,7 @@ double compute_real_energy(double **atomPositions, float *atomCharges, int numAt
 
 double dist(double **PosIons, int atom1, int atom2, float **box);
 
-double reci_energy_h(float **pos_ions,float *ion_charge, int n_atoms, int K, float **box, double beta);
+double reci_energy_h(double **PosIons, float *ion_charges, int natoms, double betaa, float **box, int K);
 
 // void scalarProductMat(double mat[3][3], double k);
 

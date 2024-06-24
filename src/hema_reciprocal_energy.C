@@ -14,7 +14,7 @@
 
 //creating reciprocal space vectors
 #if defined BASIC
-    double reci_energy_h(int K, float **box, float *ion_charge, int n_atoms, float **pos_ions, double beta){
+    double reci_energy_h(double **PosIons, float *ion_charges, int natoms, double betaa, float **box, int K){
         double reci_energy= 0
         for(int kx=-K; kx<K+1; kx++){
             for (int ky=-K; ky<K+1; ky++){
@@ -44,7 +44,7 @@
     }
 #elif defined REDUCTION_REAL_IMG
 //separate loops for real and imaginary
-    double reci_energy_h(int K, float **box, float *ion_charge, int n_atoms, float **pos_ions, double beta){
+    double reci_energy_h(double **PosIons, float *ion_charges, int natoms, double betaa, float **box, int K{
         double reci_energy= 0;
         complex<double> t(0,1);
         complex<double> SG = 0;
@@ -86,5 +86,5 @@
         reci_energy= reci_energy*2*M_PI/(box[0][0]*box[1][1]*box[2][2]);
         return reci_energy;
     }
-#elif defined REDUCTION_KVECTOR
+//#elif defined REDUCTION_KVECTOR
     
